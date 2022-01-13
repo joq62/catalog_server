@@ -15,8 +15,9 @@
 %% Include files
 %% --------------------------------------------------------------------
 -include("log.hrl").
+-include("catalog.hrl").
 %% --------------------------------------------------------------------
--define(TextFile,"catalog.config").
+
 
 %% External exports
 -export([
@@ -51,11 +52,16 @@
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
 init([]) ->
-    case rpc:call(node(),lib_catalog,load_textfile,[?TextFile],5000) of
-	{atomic,ok}->
-	    ok;
-	{error,Reason}->
-	    rpc:cast(node(),log,log,[?Log_ticket("error in load_textfile to mnesia ",[Reason])])
+    case code:where_is_file(?TextFile) of
+	non_existing->
+	    rpc:cast(node(),log,log,[?Log_ticket("non_existing textfile",[])]);
+	TextFile->
+	    case rpc:call(node(),lib_catalog,load_textfile,[TextFile],5000) of
+		{atomic,ok}->
+		    ok;
+		{error,Reason}->
+		    rpc:cast(node(),log,log,[?Log_ticket("error in load_textfile to mnesia ",[Reason])])
+	    end
     end,
     rpc:cast(node(),log,log,[?Log_info("server started",[])]),
     {ok, #state{}}.

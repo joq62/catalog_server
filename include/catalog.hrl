@@ -1,0 +1,2 @@
+-define(TextFile,"catalog.config").
+
